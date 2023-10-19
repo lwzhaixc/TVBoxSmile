@@ -1,5 +1,12 @@
 package com.github.tvbox.osc.util;
 
+import android.util.Log;
+import android.widget.Toast;
+
+import com.orhanobut.hawk.Hawk;
+
+import java.util.ArrayList;
+
 /**
  * @author pj567
  * @date :2020/12/23
@@ -7,7 +14,10 @@ package com.github.tvbox.osc.util;
  */
 public class HawkConfig {
     public static final String API_URL = "api_url";
+    public static final String API_URL_NAME_SPLIT_CHAR = "#[SPLIT]#";
+    public static final String API_URL_NAME = "api_name";
     public static final String API_HISTORY = "api_history";
+    public static final String API_HISTORY_WITH_NAME = "api_history_name";
     public static final String HOME_API = "home_api";
     public static final String DEFAULT_PARSE = "parse_default";
     public static final String DEBUG_OPEN = "debug_open";
@@ -26,4 +36,23 @@ public class HawkConfig {
     public static final String LIVE_CONNECT_TIMEOUT = "live_connect_timeout";
     public static final String LIVE_SHOW_NET_SPEED = "live_show_net_speed";
     public static final String LIVE_SHOW_TIME = "live_show_time";
+
+    public static String getApiUrlName(String url){
+        String nameTxt = "default";
+        ArrayList<String> historyNewApiName = Hawk.get(HawkConfig.API_HISTORY_WITH_NAME, new ArrayList<String>());
+        Log.e("mytest",historyNewApiName.size()+"");
+        for(int i=0;i<historyNewApiName.size();i++)
+        {
+            //Toast.makeText(getContext(),historyNewApiName.get(i),Toast.LENGTH_SHORT).show();
+            Log.e("mytest",historyNewApiName.get(i));
+            if(!historyNewApiName.get(i).contains(HawkConfig.API_URL_NAME_SPLIT_CHAR))
+                continue;
+            String[] splitRes = historyNewApiName.get(i).split(HawkConfig.API_URL_NAME_SPLIT_CHAR);
+            if(splitRes[1].equals(url)) {
+                nameTxt = splitRes[0];
+                break;
+            }
+        }
+        return  nameTxt;
+    }
 }

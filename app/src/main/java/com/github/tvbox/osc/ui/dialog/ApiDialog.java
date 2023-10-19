@@ -2,6 +2,7 @@ package com.github.tvbox.osc.ui.dialog;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -40,11 +41,14 @@ public class ApiDialog extends BaseDialog {
     private ImageView ivQRCode;
     private TextView tvAddress;
     private EditText inputApi;
+    private EditText inputApiName;
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void refresh(RefreshEvent event) {
         if (event.type == RefreshEvent.TYPE_API_URL_CHANGE) {
             inputApi.setText((String) event.obj);
+            inputApiName.setText(HawkConfig.getApiUrlName(inputApi.getText().toString().trim()));
+
         }
     }
 
@@ -55,7 +59,9 @@ public class ApiDialog extends BaseDialog {
         ivQRCode = findViewById(R.id.ivQRCode);
         tvAddress = findViewById(R.id.tvAddress);
         inputApi = findViewById(R.id.input);
+        inputApiName = findViewById(R.id.inputApiName);
         inputApi.setText(Hawk.get(HawkConfig.API_URL, ""));
+        inputApiName.setText(Hawk.get(HawkConfig.API_URL_NAME, ""));
         findViewById(R.id.inputSubmit).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -67,6 +73,26 @@ public class ApiDialog extends BaseDialog {
                     if (history.size() > 10)
                         history.remove(10);
                     Hawk.put(HawkConfig.API_HISTORY, history);
+
+                    String newApiName = inputApiName.getText().toString().trim();
+                    String newApiNameUrl = newApiName + HawkConfig.API_URL_NAME_SPLIT_CHAR + newApi;
+                    ArrayList<String> historyNewApiName = Hawk.get(HawkConfig.API_HISTORY_WITH_NAME, new ArrayList<String>());
+                    for(int i=0;i<historyNewApiName.size();i++)
+                    {
+                        if(newApiName.equals("default"))
+                            break;
+                        if(!historyNewApiName.get(i).contains(HawkConfig.API_URL_NAME_SPLIT_CHAR))
+                            continue;
+                        String[] splitRes = historyNewApiName.get(i).split(HawkConfig.API_URL_NAME_SPLIT_CHAR);
+                        if(splitRes[0].contains(newApiName) || splitRes[1].equals(newApi)) {
+                            historyNewApiName.set(i, newApiNameUrl);
+                            break;
+                        }
+                    }
+                    if (historyNewApiName.size() > 100)
+                        historyNewApiName.remove(100);
+                    Hawk.put(HawkConfig.API_HISTORY_WITH_NAME, historyNewApiName);
+
                     listener.onchange(newApi);
                     dismiss();
                 }
@@ -88,6 +114,8 @@ public class ApiDialog extends BaseDialog {
                     @Override
                     public void click(String value) {
                         inputApi.setText(value);
+                        inputApiName.setText(HawkConfig.getApiUrlName(value));
+
                         listener.onchange(value);
                         dialog.dismiss();
                     }
@@ -147,4 +175,6 @@ public class ApiDialog extends BaseDialog {
     public interface OnListener {
         void onchange(String api);
     }
+
+
 }
